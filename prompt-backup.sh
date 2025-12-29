@@ -17,7 +17,6 @@ if command -v ghostty &>/dev/null; then
         --title="$TITLE" \
         --initial-columns="$COLS" \
         --initial-rows="$ROWS" \
-        --class="system-state-backup" \
         -e "$TUI_SCRIPT"
 
 elif command -v kitty &>/dev/null; then
