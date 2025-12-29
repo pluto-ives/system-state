@@ -1,61 +1,49 @@
 #!/bin/bash
 #
-# Opens a terminal prompting the user to run the system state backup
+# Launches the System State Backup TUI in a floating terminal
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CAPTURE_SCRIPT="$SCRIPT_DIR/capture.sh"
+TUI_SCRIPT="$SCRIPT_DIR/backup-tui.sh"
 
-# Use ghostty if available, fall back to other terminals
+# Terminal window settings
+TITLE="System State Backup"
+COLS=60
+ROWS=28
+
+# Launch in preferred terminal
 if command -v ghostty &>/dev/null; then
-    ghostty -e bash -c "
-        echo '========================================'
-        echo '  Weekly System State Backup Reminder'
-        echo '========================================'
-        echo ''
-        echo 'It'\''s time to backup your system state!'
-        echo ''
-        echo 'This will:'
-        echo '  - Capture all installed packages'
-        echo '  - Backup your config files'
-        echo '  - Save enabled services'
-        echo '  - Push to GitHub'
-        echo ''
-        echo 'The backup requires sudo for system configs.'
-        echo ''
-        read -p 'Run backup now? [Y/n] ' -n 1 -r
-        echo ''
-        if [[ ! \$REPLY =~ ^[Nn]$ ]]; then
-            echo ''
-            sudo $CAPTURE_SCRIPT
-            echo ''
-            echo 'Press any key to close...'
-            read -n 1
-        fi
-    "
+    ghostty \
+        --title="$TITLE" \
+        --initial-columns="$COLS" \
+        --initial-rows="$ROWS" \
+        --class="system-state-backup" \
+        -e "$TUI_SCRIPT"
+
 elif command -v kitty &>/dev/null; then
-    kitty -e bash -c "
-        echo 'Weekly System State Backup Reminder'
-        echo ''
-        read -p 'Run backup now? [Y/n] ' -n 1 -r
-        echo ''
-        if [[ ! \$REPLY =~ ^[Nn]$ ]]; then
-            sudo $CAPTURE_SCRIPT
-            echo 'Press any key to close...'
-            read -n 1
-        fi
-    "
+    kitty \
+        --title "$TITLE" \
+        -o initial_window_width="${COLS}c" \
+        -o initial_window_height="${ROWS}c" \
+        "$TUI_SCRIPT"
+
 elif command -v alacritty &>/dev/null; then
-    alacritty -e bash -c "
-        echo 'Weekly System State Backup Reminder'
-        read -p 'Run backup now? [Y/n] ' -n 1 -r
-        echo ''
-        if [[ ! \$REPLY =~ ^[Nn]$ ]]; then
-            sudo $CAPTURE_SCRIPT
-            read -n 1
-        fi
-    "
+    alacritty \
+        --title "$TITLE" \
+        --option "window.dimensions.columns=$COLS" \
+        --option "window.dimensions.lines=$ROWS" \
+        -e "$TUI_SCRIPT"
+
+elif command -v foot &>/dev/null; then
+    foot \
+        --title "$TITLE" \
+        --window-size-chars "${COLS}x${ROWS}" \
+        "$TUI_SCRIPT"
+
 else
-    # Fallback: just send a notification
-    notify-send "System State Backup" "Run: sudo ~/Projects/system-state/capture.sh" --urgency=normal
+    # Fallback: notification
+    notify-send "System State Backup" \
+        "Run: ~/Projects/system-state/backup-tui.sh" \
+        --urgency=normal \
+        --icon=drive-harddisk
 fi
